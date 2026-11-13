@@ -1,0 +1,558 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Shopping App | London</title>
+  <style>
+    :root { --ink:#202522; --muted:#737b75; --line:#e8ece8; --green:#176b4b; --green-dark:#10543a; --soft:#f4f7f3; --cream:#fbfaf6; --orange:#d97736; }
+    * { box-sizing:border-box; }
+    body { margin:0; background:var(--cream); color:var(--ink); font:15px/1.5 Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif; }
+    button,input,select { font:inherit; }
+    button { cursor:pointer; }
+    .topbar { background:#fff; border-bottom:1px solid var(--line); position:sticky; top:0; z-index:5; }
+    .top-inner { max-width:1180px; margin:auto; padding:15px 24px; display:flex; align-items:center; gap:22px; }
+	.cart-icon {
+	  width: 20px;
+	  height: 20px;
+	  object-fit: contain;
+	}
+    .brand { font-size:20px; font-weight:800; letter-spacing:-.7px; white-space:nowrap; }
+    .brand span { color:var(--green); }
+    .location { color:var(--muted); font-size:13px; border-left:1px solid var(--line); padding-left:18px; margin-left:auto; }
+    .nav-links { display:flex; align-items:center; gap:18px; }
+    .nav-links a { color:#536058; text-decoration:none; font-size:13px; font-weight:700; white-space:nowrap; }
+    .nav-links a:hover { color:var(--green); }
+    .spacer { flex:1; }
+    .user-control { display:flex; align-items:center; gap:8px; color:var(--muted); font-size:13px; }
+    .user-control input { width:70px; padding:8px; border:1px solid var(--line); border-radius:9px; color:var(--ink); }
+    .cart-pill { border:0; border-radius:999px; padding:10px 16px; background:var(--green); color:#fff; font-weight:700; }
+    .orders-pill { border:1px solid var(--line); border-radius:999px; padding:9px 14px; background:#fff; color:var(--green); font-weight:700; }
+    .orders-popover { display:none; position:absolute; right:max(24px,calc((100vw - 1180px)/2 + 24px)); top:130px; width:min(390px,calc(100vw - 30px)); max-height:70vh; overflow:auto; background:#fff; border:1px solid var(--line); border-radius:15px; box-shadow:0 12px 35px #17251b20; padding:17px; z-index:8; }
+    .orders-popover.open { display:block; }
+    .order-card { border-top:1px solid var(--line); padding:12px 0; }
+    .order-card:first-child { border-top:0; }
+    .offer-row { display:flex; gap:8px; align-items:center; }
+    .offer-row input { flex:1; min-width:0; }
+    .offer-message { font-size:12px; margin:6px 0; color:var(--muted); }
+    .bill-line { display:flex; justify-content:space-between; margin:6px 0; color:var(--muted); font-size:13px; }
+    .bill-line.saving { color:var(--green); font-weight:700; }
+    .bill-line.grand { color:var(--ink); font-size:16px; font-weight:800; padding-top:8px; border-top:1px solid var(--line); }
+    main { max-width:1180px; margin:0 auto; padding:28px 24px 60px; }
+    .hero { border-radius:20px; padding:30px 34px; background:linear-gradient(115deg,#e5efe6,#f3eee2); display:flex; align-items:center; justify-content:space-between; gap:24px; margin-bottom:28px; }
+    .eyebrow { color:var(--green); font-size:11px; font-weight:800; letter-spacing:1.4px; text-transform:uppercase; }
+    h1 { font-size:clamp(27px,4vw,40px); line-height:1.1; letter-spacing:-1.5px; margin:8px 0; }
+    .hero p { color:#59645c; margin:0; max-width:560px; }
+    .hero-mark { font-size:64px; background:#fff9; width:112px; height:112px; border-radius:28px; display:grid; place-items:center; flex-shrink:0; }
+    .toolbar { display:flex; justify-content:space-between; align-items:center; gap:16px; margin:28px 0 12px; }
+    h2 { font-size:21px; letter-spacing:-.5px; margin:0; }
+    .sub { color:var(--muted); font-size:13px; margin-top:3px; }
+    .link-btn { border:0; background:transparent; color:var(--green); font-weight:700; }
+    .grid { display:grid; grid-template-columns:repeat(4,minmax(0,1fr)); gap:15px; }
+    .product-row { display:flex; gap:15px; overflow-x:auto; padding:2px 2px 12px; scroll-snap-type:x mandatory; scrollbar-width:thin; }
+    .product-row .product { flex:0 0 235px; scroll-snap-align:start; }
+    .discount-row { display:flex; gap:12px; overflow-x:auto; padding:2px 2px 12px; scroll-snap-type:x mandatory; }
+    .discount-row .coupon { flex:0 0 270px; scroll-snap-align:start; }
+    .product { background:#fff; border:1px solid var(--line); border-radius:15px; padding:15px; min-width:0; display:flex; flex-direction:column; box-shadow:0 2px 8px #17251b06; }
+    .product-art { height:105px; border-radius:11px; display:grid; place-items:center; font-size:42px; background:var(--soft); margin-bottom:13px; }
+    .product h3 { font-size:15px; margin:0 0 5px; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
+    .meta { color:var(--muted); font-size:12px; }
+    .price-row { display:flex; align-items:center; justify-content:space-between; margin:12px 0; }
+    .price { font-size:18px; font-weight:800; }
+    .stock { color:var(--muted); font-size:11px; }
+    .actions { display:flex; gap:8px; margin-top:auto; }
+    .primary,.secondary,.danger { border:0; border-radius:9px; padding:9px 11px; font-size:12px; font-weight:700; }
+    .primary { background:var(--green); color:#fff; flex:1; }
+    .primary:hover { background:var(--green-dark); }
+    .secondary { background:#edf4ef; color:var(--green); }
+    .danger { background:#fff0ed; color:#b54b36; }
+    .empty { grid-column:1/-1; color:var(--muted); background:#fff; border:1px dashed #d9e0da; padding:22px; border-radius:13px; text-align:center; }
+    .discount-grid { display:grid; grid-template-columns:repeat(3,minmax(0,1fr)); gap:12px; }
+    .coupon { background:#fff; border:1px dashed #b7c9bc; border-radius:13px; padding:15px; display:flex; align-items:center; justify-content:space-between; gap:10px; }
+    .coupon strong { color:var(--green); font-size:18px; }
+    .coupon small { display:block; color:var(--muted); }
+    .lower { display:grid; grid-template-columns:1.4fr .8fr; gap:18px; margin-top:30px; align-items:start; }
+    .panel { background:#fff; border:1px solid var(--line); border-radius:16px; padding:19px; }
+    .panel-head { display:flex; align-items:center; justify-content:space-between; gap:12px; margin-bottom:14px; }
+    .cart-line { display:grid; grid-template-columns:1fr auto; gap:10px; padding:13px 0; border-top:1px solid var(--line); }
+    .cart-line:first-of-type { border-top:0; }
+    .cart-name { font-weight:700; }
+    .cart-info { color:var(--muted); font-size:12px; }
+    .cart-controls { display:flex; align-items:center; gap:7px; margin-top:8px; }
+    .qty { width:58px; padding:6px; border:1px solid var(--line); border-radius:7px; }
+    .timer { color:#a45a1f; font-size:12px; font-weight:700; }
+    .checkout-row { border-top:1px solid var(--line); padding-top:14px; margin-top:10px; }
+    .checkout-row input { width:100%; border:1px solid var(--line); border-radius:9px; padding:10px; margin:8px 0; }
+    .total { display:flex; justify-content:space-between; font-weight:800; margin:10px 0 13px; }
+    .full { width:100%; padding:12px; }
+    .admin { margin-top:25px; }
+    .admin summary { color:var(--muted); font-size:13px; cursor:pointer; }
+    .admin-form { display:grid; grid-template-columns:2fr 1fr 1fr 1fr auto; gap:9px; margin-top:14px; }
+    .admin-form input { min-width:0; border:1px solid var(--line); border-radius:8px; padding:9px; }
+    .check { display:flex; align-items:center; gap:6px; color:var(--muted); font-size:12px; white-space:nowrap; }
+    .notice { position:fixed; bottom:20px; left:50%; transform:translateX(-50%); padding:11px 17px; border-radius:10px; background:#202522; color:#fff; box-shadow:0 8px 30px #0002; z-index:10; display:none; max-width:90vw; }
+    .notice.show { display:block; }
+    .section { margin-top:29px; }
+    footer { text-align:center; color:var(--muted); font-size:12px; padding:22px; }
+    @media(max-width:900px) { .grid { grid-template-columns:repeat(2,minmax(0,1fr)); } .lower { grid-template-columns:1fr; } .discount-grid { grid-template-columns:repeat(2,minmax(0,1fr)); } }
+    @media(max-width:700px) { .nav-links { order:3; width:100%; overflow-x:auto; padding:4px 0; } .top-inner { flex-wrap:wrap; } .search-nav { padding:9px 15px; flex-wrap:wrap; } .search-form { width:100%; max-width:none; } .search-actions { width:100%; } }
+    @media(max-width:560px) { .top-inner { padding:12px 15px; gap:10px; flex-wrap:wrap; } .location { font-size:11px; padding-left:9px; } .search-nav { gap:8px; } .search-actions { gap:8px; } .user-control { margin-left:auto; } main { padding:18px 15px 40px; } .hero { padding:23px; } .hero-mark { display:none; } .discount-grid { grid-template-columns:1fr; } .admin-form { grid-template-columns:1fr 1fr; } .admin-form input:first-child { grid-column:1/-1; } .admin-form button { grid-column:1/-1; } }
+
+    .subnav { border-top:1px solid var(--line); background:#fff; }
+    .subnav-inner { max-width:1180px; margin:auto; padding:0 24px; display:flex; gap:4px; overflow-x:auto; }
+    .subnav a { padding:11px 16px; color:#536058; text-decoration:none; font-size:13px; font-weight:700; border-bottom:2px solid transparent; white-space:nowrap; }
+    .subnav a:hover { color:var(--green); }
+    .subnav a.active { color:var(--green); border-bottom-color:var(--green); }
+    .search-nav { border-top:1px solid var(--line); background:#fff; max-width:1180px; margin:0 auto; padding:10px 24px; display:flex; align-items:center; gap:18px; }
+    .search-form { display:flex; gap:8px; width:min(620px,100%); margin:0; }
+    .search-form input { flex:1; min-width:0; border:1px solid var(--line); border-radius:10px; padding:10px 13px; color:var(--ink); }
+    .search-form input:focus { outline:2px solid #176b4b33; border-color:var(--green); }
+    .search-form button { border:0; border-radius:9px; padding:9px 18px; background:var(--green); color:#fff; font-weight:700; }
+    .search-form button:hover { background:var(--green-dark); }
+    .search-actions { margin-left:auto; display:flex; align-items:center; justify-content:flex-end; gap:12px; }
+    section[id], #cartPanel { scroll-margin-top:180px; }
+    button:disabled { opacity:.45; cursor:not-allowed; }
+    .stepper { display:inline-flex; align-items:center; border:1px solid var(--line); border-radius:9px; overflow:hidden; background:#fff; }
+    .stepper button { border:0; background:var(--soft); width:28px; height:30px; font-weight:800; color:var(--green); }
+    .stepper input { width:44px; border:0; text-align:center; padding:6px 0; -moz-appearance:textfield; }
+    .stepper input::-webkit-inner-spin-button { display:none; }
+    .tag { display:inline-block; font-size:11px; font-weight:700; border-radius:999px; padding:2px 8px; margin-right:4px; }
+    .tag.low { background:#fff3e6; color:#a45a1f; } .tag.out { background:#fff0ed; color:#b54b36; } .tag.bag { background:#edf4ef; color:var(--green); }
+    .warn { color:#b54b36; font-size:12px; font-weight:700; margin-top:4px; }
+    .product .primary { width:100%; flex:none; }
+  </style>
+</head>
+<body>
+<header class="topbar">
+  <div class="top-inner">
+    <div class="brand">Shopping<span> App</span></div>
+    <div class="location">Delivering in <b>London, UK</b></div>
+  </div>
+  <div class="search-nav">
+    <form class="search-form" id="itemSearchForm" role="search">
+      <input id="itemSearch" type="search" placeholder="Search products..." aria-label="Search products" autocomplete="off" />
+      <button type="submit">Search</button>
+    </form>
+    <div class="search-actions">
+        <label class="user-control">User ID <input id="userId" type="number" min="1" value="1" /></label>
+        <button class="orders-pill" onclick="toggleOrders()">Orders</button>
+        <button class="cart-pill" onclick="document.getElementById('cartPanel').scrollIntoView({behavior:'smooth'})">Cart <img src="https://www.svgrepo.com/show/80543/shopping-cart-outline.svg" alt="Shopping Cart Icon" class="cart-icon">
+          <span id="cartCount">0</span></button>
+    </div>
+  </div>
+  <nav class="subnav" aria-label="Dashboards"><div class="subnav-inner"><a href="#popularSection">Popular</a><a href="#wishlistSection">Wishlist</a><a href="#newSection">Latest products</a><a href="#discountSection">Discounted</a></div></nav>
+  <div id="ordersPopover" class="orders-popover"><div class="panel-head"><h2>My orders</h2><button class="link-btn" onclick="loadOrders()">Refresh ↻</button></div><div id="ordersList"><div class="empty">Click Orders to view your purchases.</div></div></div>
+</header>
+<main>
+  <section class="hero">
+    <div><div class="eyebrow">London store</div><h1>Shop popular and new items.</h1><p>Browse products, save favourites, use active vouchers and manage your shopping bag.</p></div>
+    
+  </section>
+
+  <section class="section" id="searchSection" hidden>
+    <div class="toolbar">
+      <div><h2 id="searchTitle">Search products</h2><div class="sub" id="searchStatus"></div></div>
+      <button class="link-btn" type="button" onclick="clearSearch()">Clear search</button>
+    </div>
+    <div id="searchResults" class="product-row"></div>
+  </section>
+
+  <section class="section" id="popularSection">
+    <div class="toolbar"><div><h2>Popular right now</h2><div class="sub">Items in high demand · Limited-time reservations</div></div><button class="link-btn" onclick="refresh()">Refresh ↻</button></div>
+    <div id="popular" class="product-row"><div class="empty">Loading popular items…</div></div>
+  </section>
+
+  <section class="section" id="wishlistSection">
+    <div class="toolbar"><div><h2>Liked by you</h2><div class="sub">Items you have saved · most recent first</div></div><button class="link-btn" onclick="refresh()">Refresh ↻</button></div>
+    <div id="wishlist" class="product-row"><div class="empty">Loading favourites…</div></div>
+  </section>
+
+  <section class="section" id="newSection">
+    <div class="toolbar"><div><h2>Just landed</h2><div class="sub">The newest additions to the shop</div></div><button class="link-btn" onclick="refresh()">Refresh ↻</button></div>
+    <div id="newItems" class="product-row"><div class="empty">Loading new items…</div></div>
+  </section>
+
+  <section class="section" id="discountSection">
+    <div class="toolbar"><div><h2>Discounted</h2><div class="sub">Discounts and vouchers valid right now</div></div><button class="link-btn" onclick="refresh()">Refresh ↻</button></div>
+    <div id="discounts" class="discount-row"><div class="empty">Loading offers…</div></div>
+  </section>
+
+  <section class="section" id="bagSection">
+    <div class="panel" id="cartPanel">
+      <div class="panel-head"><div><h2>Your bag</h2><div class="sub">High-demand items are held for 15 minutes</div></div><button class="link-btn" onclick="refresh()">Refresh ↻</button></div>
+      <div id="cart"><div class="empty">Your bag is empty.</div></div>
+      <div class="checkout-row">
+        <label class="meta" for="discountCode">Voucher code (optional)</label>
+        <div class="offer-row">
+          <input id="discountCode" placeholder="Enter a voucher code" />
+          <button class="secondary" type="button" onclick="applyOffer()">Apply offer</button>
+        </div>
+        <div id="offerMessage" class="offer-message">Apply a valid voucher to see your savings.</div>
+        <div class="bill-line"><span>Subtotal</span><span id="cartSubtotal">£0.00</span></div>
+        <div class="bill-line saving"><span>Savings</span><span id="cartSavings">−£0.00</span></div>
+        <div class="bill-line grand"><span>Total</span><span id="cartTotal">£0.00</span></div>
+        <div id="checkoutHint" class="warn" style="margin-bottom:8px"></div>
+        <button id="checkoutBtn" class="primary full" onclick="checkout()" disabled>Place order</button>
+        <div class="meta" style="margin-top:8px">A unique order reference is generated for checkout and reused if you retry.</div>
+      </div>
+    </div>
+  </section>
+
+  <details class="admin">
+    <summary>Demo setup · Add a product (for assessment testing)</summary>
+    <form class="admin-form" id="addProductForm">
+      <input id="productName" placeholder="Product name" required />
+      <input id="productPrice" type="number" min="0.01" step="0.01" placeholder="Price (£)" required />
+      <input id="productStock" type="number" min="0" step="1" placeholder="Stock" required />
+      <label class="check"><input id="highDemand" type="checkbox" /> High demand</label>
+      <button class="primary" type="submit">Add product</button>
+    </form>
+  </details>
+</main>
+<footer>Shopping App · London store demo</footer>
+<div id="notice" class="notice" role="status"></div>
+<script>
+  const API = '/api';
+  const S = {uid:1, items:new Map(), popular:[], fresh:[], likedIds:[], cart:[], discounts:[], applied:null, sub:0, err:'', searchQuery:'', searchIds:[], searchError:'', searchLoading:false};
+  const pick = new Map(), draft = new Map();   // qty chosen on a product card / unsaved qty edits in the bag
+  let noticeTimer, busy = false, searchTimer, searchSequence = 0;
+  const $ = id => document.getElementById(id);
+  const userId = () => S.uid;
+  const money = v => '£' + Number(v || 0).toFixed(2);
+  const esc = v => String(v ?? '').replace(/[&<>"']/g, c => ({
+    '&': '\u0026amp;',
+    '<': '\u0026lt;',
+    '>': '\u0026gt;',
+    '"': '\u0026quot;',
+    "'": '\u0026#39;'
+  }[c]));
+  const ts = s => s ? new Date(s).getTime() : null;   // server sends zone-less LocalDateTime: parsed as browser-local time
+  function toast(m) { const el = $('notice'); el.textContent = m; el.classList.add('show'); clearTimeout(noticeTimer); noticeTimer = setTimeout(() => el.classList.remove('show'), 3500); }
+  async function api(path, o = {}) {
+    let res;
+    try { res = await fetch(API + path, {headers:{'Content-Type':'application/json'}, ...o}); }
+    catch (_) { throw new Error('Network error. Check your connection and try again.'); }
+    if (res.status === 403) {
+      document.getElementById('locationBlocked').style.display = 'grid';
+      throw new Error('Service available exclusively in London, UK.');
+    }
+    if (!res.ok) {
+      let m = `Request failed (${res.status})`;
+      try { const b = await res.json(); m = b.message || b.error || m; } catch (_) {}
+      const e = new Error(m); e.status = res.status; throw e;
+    }
+    const data = res.status === 204 ? null : await res.json();
+    return o.raw ? {status:res.status, data} : data;
+  }
+
+  // ---- stock rules (the server enforces the same ones; the UI just stops you earlier) ----
+  const rowOf = id => S.cart.find(r => r.id.itemId === id);
+  const isExpired = r => !!r.reservedUntil && ts(r.reservedUntil) <= Date.now();
+  const avail = it => Math.max(0, it.availableStock ?? (it.stock - it.reserved));
+  const maxQty = id => { const it = S.items.get(id), r = rowOf(id); return it ? (r && r.reservedUntil ? r.quantity : 0) + avail(it) : 0; };
+  const inBag = id => rowOf(id)?.quantity || 0;
+  const canAdd = id => Math.max(0, maxQty(id) - inBag(id));
+  const toQty = (v, max, min = 1) => { const n = Math.floor(Number(v)); return Number.isFinite(n) ? Math.min(Math.max(n, min), Math.max(max, min)) : min; };
+  const toList = res => Array.isArray(res) ? res : (res?.content || []);
+
+  // ---- loading ----
+  async function loadCatalog() {
+    const [allRes, popRes, neuRes] = await Promise.all([api('/items'), api('/items/popular'), api('/items/new')]);
+    const all = toList(allRes), pop = toList(popRes), neu = toList(neuRes);
+    S.items = new Map(all.map(i => [i.id, i]));
+    [...pop, ...neu].forEach(i => { if (!S.items.has(i.id)) S.items.set(i.id, i); });
+    S.popular = pop.map(i => i.id); S.fresh = neu.map(i => i.id);
+  }
+  async function loadLikes() {
+    const l = await api(`/users/${userId()}/wishlist`);
+    S.likedIds = toList(l).sort((a, b) => String(b.createdAt).localeCompare(String(a.createdAt))).map(x => x.itemId);
+  }
+  async function loadCart() { S.cart = toList(await api(`/users/${userId()}/cart`)); }
+  async function loadDiscounts() { S.discounts = toList(await api('/discounts/available')); }
+  async function refresh() {
+    const res = await Promise.allSettled([loadCatalog(), loadLikes(), loadCart(), loadDiscounts()]);
+    const failed = res.find(r => r.status === 'rejected');
+    S.err = failed ? failed.reason.message : '';
+    if (failed) toast(S.err);
+    renderAll();
+  }
+
+  // ---- rendering ----
+  function card(it) {
+    const id = it.id, total = avail(it), left = canAdd(id), bag = inBag(id), liked = S.likedIds.includes(id);
+    const q = toQty(pick.get(id) || 1, left);
+    const tag = total < 1 ? (bag ? '' : '<span class="tag out">Sold out</span>') : total <= 5 ? `<span class="tag low">Only ${total} left</span>` : '';
+    const label = left < 1 ? (bag ? 'Max in bag' : 'Sold out') : 'Add to bag';
+    return `<article class="product">
+      <div class="product-art">${it.highDemand ? '🔥' : '✦'}</div>
+      <h3 title="${esc(it.name)}">${esc(it.name)}</h3>
+      <div class="meta">${it.highDemand ? 'Popular pick · held for 15 min' : 'Everyday favourite'} · #${id}</div>
+      <div class="price-row"><span class="price">${money(it.price)}</span><span class="stock">${total} available</span></div>
+      <div class="meta" style="min-height:22px">${tag}${bag ? `<span class="tag bag">${bag} in bag</span>` : ''}</div>
+      <div class="actions" style="margin:8px 0">
+        <div class="stepper"><button ${q <= 1 || left < 1 ? 'disabled' : ''} onclick="stepPick(${id},-1)" aria-label="Fewer">−</button><input type="number" min="1" max="${left}" value="${left < 1 ? 0 : q}" ${left < 1 ? 'disabled' : ''} onchange="setPick(${id},this.value)" aria-label="Quantity"><button ${q >= left ? 'disabled' : ''} onclick="stepPick(${id},1)" aria-label="More">+</button></div>
+        <button class="secondary" title="${liked ? 'Unlike' : 'Like'}" onclick="toggleLike(${id})">${liked ? '♥' : '♡'}</button>
+      </div>
+      <button class="primary" ${left < 1 ? 'disabled' : ''} onclick="addToCart(${id})">${label}</button>
+    </article>`;
+  }
+  function renderRow(target, ids, emptyMsg) {
+    const list = ids.map(id => S.items.get(id)).filter(Boolean);
+    $(target).innerHTML = list.length ? list.map(card).join('') : `<div class="empty">${esc(S.err || emptyMsg)}</div>`;
+  }
+  function renderDiscounts() {
+    $('discounts').innerHTML = S.discounts.length ? S.discounts.map(d => `<div class="coupon"><div><strong>${esc(d.discountType === 'PERCENT' ? d.discountValue + '% OFF' : money(d.discountValue) + ' OFF')}</strong><small>${d.itemId ? 'On ' + esc(S.items.get(d.itemId)?.name || 'item #' + d.itemId) : 'On your basket'}</small><small>Code: ${esc(d.code)}</small></div><button class="secondary" onclick="copyCode('${esc(d.code)}')">Copy</button></div>`).join('') : '<div class="empty">No active vouchers at the moment.</div>';
+  }
+  function renderCart() {
+    let sub = 0, count = 0, blocked = false;
+    $('cart').innerHTML = S.cart.length ? S.cart.map(r => {
+      const id = r.id.itemId, it = S.items.get(id), price = Number(it?.price || 0), max = maxQty(id);
+      const exp = isExpired(r), over = !exp && r.quantity > max, dq = draft.get(id) ?? r.quantity;
+      if (exp || over || !it) blocked = true;
+      if (!exp) { sub += price * r.quantity; count += r.quantity; }
+      const status = exp ? '<div class="warn">Reservation expired. Remove this item to continue.</div>'
+        : r.reservedUntil ? `<div class="timer" data-expiry="${ts(r.reservedUntil)}"></div>` : '<div class="cart-info">No timed reservation</div>';
+      const warn = over ? `<div class="warn">Only ${max} available now. Reduce the quantity.</div>` : '';
+      const dis = exp ? 'disabled' : '';
+      return `<div class="cart-line"><div><div class="cart-name">${esc(it?.name || 'Item #' + id)}</div><div class="cart-info">${money(price)} each · up to ${max}</div>${status}${warn}
+        <div class="cart-controls"><div class="stepper"><button ${dis} ${dq <= 1 ? 'disabled' : ''} onclick="bump(${id},-1)">−</button><input id="qty-${id}" type="number" min="1" max="${max}" value="${dq}" ${dis} onchange="editQty(${id},this.value)"><button ${dis} ${dq >= max ? 'disabled' : ''} onclick="bump(${id},1)">+</button></div>
+        <button class="secondary" ${exp || dq === r.quantity || dq < 1 || dq > max ? 'disabled' : ''} onclick="updateCart(${id})">Update</button><button class="danger" onclick="removeCart(${id})">Remove</button></div></div><b>${money(exp ? 0 : price * r.quantity)}</b></div>`;
+    }).join('') : '<div class="empty">Your bag is empty.</div>';
+    $('cartCount').textContent = count;
+    S.sub = sub; renderBill(sub);
+    $('checkoutBtn').disabled = !S.cart.length || blocked;
+    $('checkoutHint').textContent = blocked ? 'Fix the highlighted items (expired or above available stock) to place your order.' : '';
+  }
+  function renderAll() {
+    renderSearch();
+    renderRow('popular', S.popular, 'No popular items yet.');
+    renderRow('wishlist', S.likedIds, 'No favourites yet. Tap ♡ on any item to save it.');
+    renderRow('newItems', S.fresh, 'No new items yet. Add one in the demo setup below.');
+    renderDiscounts(); renderCart(); updateTimers();
+  }
+
+  function renderSearch() {
+    const section = $('searchSection');
+    section.hidden = !S.searchQuery;
+    if (!S.searchQuery) return;
+    $('searchTitle').textContent = `Search results for "${S.searchQuery}"`;
+    $('searchStatus').textContent = S.searchError ? '' : S.searchLoading ? 'Searching...' : `${S.searchIds.length} product${S.searchIds.length === 1 ? '' : 's'} found`;
+    const products = S.searchIds.map(id => S.items.get(id)).filter(Boolean);
+    $('searchResults').innerHTML = S.searchError
+      ? `<div class="empty">${esc(S.searchError)}</div>`
+      : S.searchLoading ? '<div class="empty">Searching products...</div>'
+      : products.length ? products.map(card).join('') : '<div class="empty">No products match your search.</div>';
+  }
+  async function searchItems(query = $('itemSearch').value) {
+    const value = query.trim();
+    clearTimeout(searchTimer);
+    if (!value) {
+      clearSearch();
+      return;
+    }
+    const sequence = ++searchSequence;
+    S.searchQuery = value;
+    S.searchIds = [];
+    S.searchError = '';
+    S.searchLoading = true;
+    renderSearch();
+    try {
+      const results = toList(await api(`/items/search?query=${encodeURIComponent(value)}`));
+      if (sequence !== searchSequence) return;
+      results.forEach(item => S.items.set(item.id, item));
+      S.searchIds = results.map(item => item.id);
+      S.searchLoading = false;
+      renderSearch();
+    } catch (error) {
+      if (sequence !== searchSequence) return;
+      S.searchLoading = false;
+      S.searchError = error.message;
+      renderSearch();
+    }
+  }
+  function clearSearch() {
+    clearTimeout(searchTimer);
+    searchSequence++;
+    S.searchQuery = '';
+    S.searchIds = [];
+    S.searchError = '';
+    S.searchLoading = false;
+    $('itemSearch').value = '';
+    renderSearch();
+  }
+  $('itemSearchForm').addEventListener('submit', event => {
+    event.preventDefault();
+    searchItems();
+    $('searchSection').scrollIntoView({behavior:'smooth', block:'start'});
+  });
+  $('itemSearch').addEventListener('input', () => {
+    clearTimeout(searchTimer);
+    searchTimer = setTimeout(() => searchItems(), 250);
+  });
+
+  // ---- product card actions ----
+  function setPick(id, v) {
+    const left = canAdd(id);
+    if (left > 0 && Number(v) > left) toast(`Only ${left} more can be added`);
+    pick.set(id, toQty(v, left)); renderAll();
+  }
+  const stepPick = (id, d) => setPick(id, toQty(pick.get(id) || 1, canAdd(id)) + d);
+  async function guarded(fn) {
+    if (busy) return; busy = true;
+    try { await fn(); } catch (e) { toast(e.message); }
+    finally { busy = false; await refresh(); }   // always re-sync: stock may have changed under us
+  }
+  const addToCart = id => guarded(async () => {
+    const left = canAdd(id), q = toQty(pick.get(id) || 1, left);
+    if (left < 1) throw new Error('No more units are available to add.');
+    await api(`/users/${userId()}/cart/items`, {method:'POST', body:JSON.stringify({itemId:id, quantity:q})});
+    pick.delete(id); toast(`Added ${q} to your bag`);
+  });
+  const toggleLike = id => guarded(async () => {
+    const liked = S.likedIds.includes(id);
+    await api(`/users/${userId()}/wishlist/${id}`, {method: liked ? 'DELETE' : 'POST'});
+    toast(liked ? 'Removed from favourites' : 'Added to favourites');
+  });
+
+  // ---- bag actions ----
+  function editQty(id, v) {
+    const max = maxQty(id); let n = Math.floor(Number(v));
+    if (!Number.isFinite(n) || n < 1) n = 1;
+    if (n > max) { toast(`Only ${max} available`); n = max; }
+    draft.set(id, n); renderAll();
+  }
+  const bump = (id, d) => editQty(id, (draft.get(id) ?? rowOf(id).quantity) + d);
+  const updateCart = id => guarded(async () => {
+    const r = rowOf(id), q = draft.get(id);
+    if (!r || q == null) return;
+    if (isExpired(r)) throw new Error('This reservation has expired. Remove the item and add it again.');
+    if (!Number.isInteger(q) || q < 1 || q > maxQty(id)) throw new Error(`Quantity must be between 1 and ${maxQty(id)}.`);
+    await api(`/users/${userId()}/cart/items/${id}?quantity=${q}`, {method:'PUT'});
+    draft.delete(id); toast('Bag updated');
+  });
+  const removeCart = id => guarded(async () => {
+    await api(`/users/${userId()}/cart/items/${id}`, {method:'DELETE'}); draft.delete(id); toast('Item removed');
+  });
+
+  // ---- offers ----
+  function discountFor(d, sub) {
+    let elig = 0;
+    S.cart.forEach(r => { const it = S.items.get(r.id.itemId); if (it && !isExpired(r) && (d.itemId == null || Number(d.itemId) === it.id)) elig += Number(it.price) * r.quantity; });
+    if (elig <= 0) return 0;
+    return d.discountType === 'PERCENT' ? elig * Math.min(Number(d.discountValue), 100) / 100 : Math.min(elig, Number(d.discountValue));
+  }
+  function renderBill(sub) {
+    const msg = $('offerMessage'); let save = 0;
+    if (S.applied) {
+      const live = S.discounts.find(d => d.code === S.applied.code);   // must still be active
+      save = live ? discountFor(live, sub) : 0;
+      if (save <= 0) { S.applied = null; msg.textContent = 'Your offer no longer applies to this bag.'; msg.style.color = '#b54b36'; }
+      else { msg.textContent = `${live.code} applied. You save ${money(save)}.`; msg.style.color = 'var(--green)'; }
+    }
+    $('cartSubtotal').textContent = money(sub);
+    $('cartSavings').textContent = '−' + money(save);
+    $('cartTotal').textContent = money(Math.max(0, sub - save));
+  }
+  function applyOffer() {
+    const code = $('discountCode').value.trim(), msg = $('offerMessage');
+    const d = S.discounts.find(x => String(x.code).toLowerCase() === code.toLowerCase());
+    S.applied = null; msg.style.color = '#b54b36';
+    if (!code) { msg.textContent = 'Enter a voucher code first.'; msg.style.color = '#a45a1f'; }
+    else if (!d) msg.textContent = 'This code is invalid or not currently active.';
+    else if (discountFor(d, S.sub) <= 0) msg.textContent = 'This offer does not apply to items in your bag.';
+    else S.applied = d;
+    renderAll();
+  }
+
+  // ---- checkout ----
+  const keyName = () => `shopping-pending-order-${userId()}`;
+  async function checkout() {
+    if (busy) return; busy = true; $('checkoutBtn').disabled = true;
+    try {
+      await Promise.all([loadCatalog(), loadCart(), loadDiscounts()]); renderAll();   // validate against fresh data
+      if (!S.cart.length) return toast('Your bag is empty.');
+      if (S.cart.some(r => isExpired(r) || r.quantity > maxQty(r.id.itemId))) return toast('Some items expired or exceed available stock. Fix them first.');
+      const code = $('discountCode').value.trim();
+      if (code && !(S.applied && S.applied.code.toLowerCase() === code.toLowerCase())) return toast('Press Apply offer to use this code, or clear the field.');
+      let orderId = localStorage.getItem(keyName());
+      if (!orderId) { orderId = `ORD-${Date.now()}-${crypto.randomUUID()}`; localStorage.setItem(keyName(), orderId); }
+      const {status, data} = await api(`/users/${userId()}/orders/checkout`, {method:'POST', raw:true, body:JSON.stringify({orderId, discountCode:S.applied ? S.applied.code : null})});
+      localStorage.removeItem(keyName());
+      toast(status === 200 ? `This order was already placed: ${data.orderId}` : `Order placed · ${data.orderId} · ${money(data.total)}`);
+      $('discountCode').value = ''; S.applied = null; $('offerMessage').textContent = 'Apply a valid voucher to see your savings.'; $('offerMessage').style.color = '';
+      if ($('ordersPopover').classList.contains('open')) await loadOrders();
+    } catch (e) {
+      const definite = e.status && e.status < 500;   // 4xx: no order was created, so the reference can be discarded
+      if (definite) localStorage.removeItem(keyName());
+      toast(e.message + (definite ? '' : ' · Retrying is safe: the same order reference is reused.'));
+    } finally { busy = false; await refresh(); }
+  }
+
+  // ---- orders popover, copy, timers, demo form ----
+  function toggleOrders() {
+    const panel = document.getElementById('ordersPopover');
+    panel.classList.toggle('open');
+    if (panel.classList.contains('open')) loadOrders();
+  }
+  async function loadOrders() {
+    const list = document.getElementById('ordersList');
+    list.innerHTML = '<div class="empty">Loading orders…</div>';
+    try {
+      const orders = await api(`/users/${userId()}/orders`);
+      list.innerHTML = orders.length ? orders.map(order => {
+        let items = [];
+        try { items = JSON.parse(order.items || '[]'); } catch (_) {}
+        const itemText = items.map(item => `${esc(item.name || `Item #${item.itemId}`)} × ${item.qty}`).join(', ');
+        const date = order.createdAt ? new Date(order.createdAt).toLocaleString() : '';
+        return `<div class="order-card"><div style="display:flex;justify-content:space-between;gap:8px"><b>${esc(order.orderId)}</b><b>${money(order.total)}</b></div><div class="cart-info">${esc(date)}</div><div class="cart-info" style="margin-top:5px">${itemText || 'Order items'}</div>${order.discountCode ? `<div class="offer-message">Offer used: ${esc(order.discountCode)}</div>` : ''}</div>`;
+      }).join('') : '<div class="empty">You have not placed any orders yet.</div>';
+    } catch (e) { list.innerHTML = `<div class="empty">${esc(e.message)}</div>`; }
+  }
+  async function copyCode(code) {
+    try { await navigator.clipboard.writeText(code); toast('Voucher copied'); }
+    catch (_) { document.getElementById('discountCode').value = code; toast('Voucher added to checkout'); }
+  }
+  function formatRemaining(ms) {
+    if (ms <= 0) return 'expired';
+    const sec = Math.floor(ms / 1000); return `${String(Math.floor(sec / 60)).padStart(2,'0')}:${String(sec % 60).padStart(2,'0')}`;
+  }
+  
+  function updateTimers() {
+    let hit = false;
+    document.querySelectorAll('[data-expiry]').forEach(el => {
+      const left = Number(el.dataset.expiry) - Date.now();
+      if (left <= 0) hit = true; else el.textContent = `Reservation: ${formatRemaining(left)} left`;
+    });
+    return hit;
+  }
+  document.getElementById('addProductForm').addEventListener('submit', async event => {
+    event.preventDefault();
+    const payload = {name:document.getElementById('productName').value.trim(), price:Number(document.getElementById('productPrice').value), stock:Number(document.getElementById('productStock').value), highDemand:document.getElementById('highDemand').checked};
+    try { await api('/items', {method:'POST', body:JSON.stringify(payload)}); event.target.reset(); toast('Product added'); await refresh(); }
+    catch (e) { toast(e.message); }
+  });
+  
+  $('userId').addEventListener('change', e => {
+    const v = Number(e.target.value);
+    if (!Number.isInteger(v) || v < 1) { toast('User ID must be a whole number, 1 or more.'); e.target.value = S.uid; return; }
+    S.uid = v; S.applied = null; draft.clear(); pick.clear(); refresh();
+  });
+  document.addEventListener('click', event => { const panel = document.getElementById('ordersPopover'); if (!panel.contains(event.target) && !event.target.closest('.orders-pill')) panel.classList.remove('open'); });
+  
+  const navLinks = [...document.querySelectorAll('.subnav a')];
+  const spy = new IntersectionObserver(es => es.forEach(e => { if (e.isIntersecting) navLinks.forEach(a => a.classList.toggle('active', a.getAttribute('href') === '#' + e.target.id)); }), {rootMargin:'-30% 0px -60% 0px'});
+  document.querySelectorAll('main section[id]').forEach(s => spy.observe(s));
+  refresh();
+  setInterval(() => { if (updateTimers()) { renderAll(); setTimeout(refresh, 1500); } }, 1000);   // a hold just ran out
+  setInterval(() => { if (!document.activeElement?.matches('input[type=number]')) refresh(); }, 15000);
+</script>
+</body>
+<div id="locationBlocked" style="display:none; position:fixed; inset:0; background:var(--cream); z-index:9999; place-items:center; padding:24px; text-align:center;">
+  <div style="max-width:440px; background:#fff; border:1px solid var(--line); border-radius:20px; padding:36px 28px; box-shadow:0 12px 35px #17251b15;">
+    <div style="font-size:48px; margin-bottom:12px;">📍</div>
+    <h2 style="margin:0 0 8px;">London Only Store</h2>
+    <p style="color:var(--muted); margin:0 0 18px;">Sorry, this shopping service is currently available exclusively for customers in <b>London, UK</b>.</p>
+    <div id="blockedIpInfo" style="font-size:12px; color:#b54b36; background:#fff0ed; padding:8px 12px; border-radius:8px;">Access restricted by IP geolocation</div>
+  </div>
+</div>
+</html>
